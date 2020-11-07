@@ -1,0 +1,8 @@
+* Features
+** TODO Insertion commands
+- insert-root to start
+  - Uses Helm so you can search by description
+- set-stem, set-version, set-context, etc. provide a Helm-powered menu that shows keywords and descriptions so you can search by description
+** TODO Internal formative parsing
+- Have a generalized function that can parse a partial or complete formative (in decoded form) into an internal representation
+- Functions to modify formative can use this parser to read in a formative, change it, then write it back out
