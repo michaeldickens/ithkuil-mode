@@ -9,6 +9,8 @@ This repo is still in its early stages, so it doesn't have many features and it'
 
 ## Basic usage
 
+<img src="/assets/ithkuil-mode-screenshot.png" />
+
 `ithkuil-mode` provides utilities to manipulate formatives in Ithkuil 2020, as it existed in [version 0.16](http://www.ithkuil.net/morpho-phonology_v_0_16.pdf).
 
 You can write out an Ithkuil formative using the formative notation, for example:
@@ -38,8 +40,6 @@ A set of additional functions allow you to set the value of any category while y
 `ithkuil-mode` can parse basic formatives and understand when they are not formatted correctly.
 
 As a proof of concept, `ithkuil-mode` has a function to convert the `Vv` slot into actual Ithkuil, but only for the `Vv` slot.
-
-<img src="/assets/ithkuil-mode-screenshot.png" />
 
 ## Features that would be nice, but aren't yet supported
 
