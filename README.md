@@ -39,7 +39,7 @@ A set of additional functions allow you to set the value of any category while y
 
 As a proof of concept, `ithkuil-mode` has a function to convert the `Vv` slot into actual Ithkuil, but only for the `Vv` slot.
 
-[](assets/ithkuil-mode-screenshot.png)
+<img src="/assets/ithkuil-mode-screenshot.png" />
 
 ## Features that would be nice, but aren't yet supported
 
