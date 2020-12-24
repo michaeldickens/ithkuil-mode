@@ -1,0 +1,27 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /home/mdickens/programs/emacs-lisp/ithkuil-mode/TODO.org
+
+
+* DONE Internal formative parsing
+CLOSED: [2020-11-07 Sat 17:41]
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-23 Wed 20:45
+:ARCHIVE_FILE: ~/programs/emacs-lisp/ithkuil-mode/TODO.org
+:ARCHIVE_OLPATH: Features
+:ARCHIVE_CATEGORY: TODO
+:ARCHIVE_TODO: DONE
+:END:
+- Have a generalized function that can parse a partial or complete formative (in decoded form) into an internal representation
+- Functions to modify formative can use this parser to read in a formative, change it, then write it back out
+
+* DONE Parser implementation is really janky. Would be much cleaner with regexes. Parser generator would be even better
+CLOSED: [2020-12-23 Wed 20:38]
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-23 Wed 20:45
+:ARCHIVE_FILE: ~/programs/emacs-lisp/ithkuil-mode/TODO.org
+:ARCHIVE_OLPATH: Refactor
+:ARCHIVE_CATEGORY: TODO
+:ARCHIVE_TODO: DONE
+:END:

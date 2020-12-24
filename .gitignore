@@ -1,11 +1,2 @@
-# Compiled
+.DS_Store
 *.elc
-
-# Packaging
-.cask
-
-# Backup files
-*~
-
-# Undo-tree save-files
-*.~undo-tree

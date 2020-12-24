@@ -54,8 +54,10 @@
 (defvar ithkuil-perspective-keywords '("M" "P" "N" "A"))
 (defvar ithkuil-essence-keywords '("NRM" "RPV"))
 
-(defvar ithkuil-formative-legal-chars "[a-zA-Z0-3/\\-]")
-(defvar ithkuil-slot-legal-chars "[a-zA-Z0-3/]")
+(defvar ithkuil-alphabet "aäbcčdḍeëfgiïjklmnňoöprřsštţuüvxzẓž")
+(defvar ithkuil-slot-regexp (format "[%s0-3/]+" ithkuil-alphabet))
+(defvar ithkuil-formative-regexp (format "[%s0-3/]+\\(-[%s0-3/]+\\)*"
+                                         ithkuil-alphabet ithkuil-alphabet))
 
 ;;;
 ;;;
@@ -106,6 +108,7 @@
 
 (defvar ithkuil-category-ordering
   '((stem . 0) (version . 1) (context . 2)
+    (root . 0)
     (function . 0) (specification . 1)
     (membership . 0) (structure . 1) (extension . 2) (affiliation . 3) (perspective . 4) (essence . 5)))
 
@@ -131,7 +134,7 @@ of the formative.")
 
 ;;;
 ;;;
-;;; Internal Ithkuil functions.
+;;; Internal Ithkuil functions
 ;;;
 ;;;
 
@@ -151,23 +154,29 @@ of the formative.")
    (t nil)))
 
 (defun ithkuil-slot-type (word)
-  (cond
-   ((member word ithkuil-stem-keywords) '(Vv Vr))
-   ((member word ithkuil-version-keywords) 'Vv)
-   ((member word ithkuil-context-keywords) 'Vv)
-   ((member word ithkuil-function-keywords) 'Vr)
-   ((member word ithkuil-specification-keywords) 'Vr)
-   ((member word ithkuil-membership-keywords) 'Ca)
-   ((member word ithkuil-structure-keywords) 'Ca)
-   ((member word ithkuil-extension-keywords) 'Ca)
-   ((member word ithkuil-affiliation-keywords) 'Ca)
-   ((member word ithkuil-perspective-keywords) 'Ca)
-   ((member word ithkuil-essence-keywords) 'Ca)
-   (t nil)))
+  ;; TODO: rewrite this as (ithkuil-slot-type-for-category (ithkuil-category word)), and test it
+  (ithkuil-slot-type-for-category (ithkuil-category word)))
+  ;; (cond
+  ;;  ((member word ithkuil-stem-keywords) '(Vv Vr))
+  ;;  ((member word ithkuil-version-keywords) 'Vv)
+  ;;  ((member word ithkuil-context-keywords) 'Vv)
+  ;;  ((member word ithkuil-function-keywords) 'Vr)
+  ;;  ((member word ithkuil-specification-keywords) 'Vr)
+  ;;  ((member word ithkuil-membership-keywords) 'Ca)
+  ;;  ((member word ithkuil-structure-keywords) 'Ca)
+  ;;  ((member word ithkuil-extension-keywords) 'Ca)
+  ;;  ((member word ithkuil-affiliation-keywords) 'Ca)
+  ;;  ((member word ithkuil-perspective-keywords) 'Ca)
+  ;;  ((member word ithkuil-essence-keywords) 'Ca)
+  ;;  (t nil)))
 
 (defun ithkuil-slot-type-for-category (category)
   (cond
-   ((eq category 'stem) '(Vv Vr))
+   ;; TODO: Stem can also appear in slot Vr, but allowing for two slots will
+   ;; require changing 'ithkuil-set-keyword-generic to allow the
+   ;; user to specify which one to set.
+   ((eq category 'root) 'Cr)
+   ((eq category 'stem) 'Vv)
    ((eq category 'version) 'Vv)
    ((eq category 'context) 'Vv)
    ((eq category 'function) 'Vr)
@@ -182,31 +191,23 @@ of the formative.")
 
 (defun ithkuil-beginning-of-slot ()
   "Scan to beginning of slot."
-  (while (string-match-p ithkuil-slot-legal-chars (thing-at-point 'char t))
-    (backward-char))
-  (forward-char))
+  (when (thing-at-point-looking-at ithkuil-slot-regexp)
+    (goto-char (match-beginning 0))))
+
+(defun ithkuil-beginning-of-formative ()
+  "Scan to beginning of formative."
+  (when (thing-at-point-looking-at ithkuil-formative-regexp)
+    (goto-char (match-beginning 0))))
 
 (defun ithkuil-end-of-slot ()
   "Scan to end of slot."
-  (while (and (not (null (thing-at-point 'char t)))
-              (string-match-p ithkuil-slot-legal-chars (thing-at-point 'char t)))
-    (forward-char)))
-
-(defun ithkuil-beginning-of-formative ()
-  (loop do (ithkuil-beginning-of-slot)
-        while (not (eq (point) (point-min)))
-        do (backward-char)
-        while (string= "-" (thing-at-point 'char t))
-        do (backward-char))
-  (forward-char))
+  (when (thing-at-point-looking-at ithkuil-slot-regexp)
+    (goto-char (match-end 0))))
 
 (defun ithkuil-end-of-formative ()
-  ;; TODO: this will behave incorrectly if formative reaches end of buffer
-  (loop do (ithkuil-end-of-slot)
-        while (not (eq (point) (point-max)))
-        while (string= "-" (thing-at-point 'char t))
-        do (forward-char))
-  (backward-char))
+  "Scan to end of formative."
+  (when (thing-at-point-looking-at ithkuil-formative-regexp)
+    (goto-char (match-end 0))))
 
 (defun ithkuil-read-slot-keywords-at-point ()
   (save-excursion
@@ -247,88 +248,6 @@ of the formative.")
 
         `(,slot-type . ,(ithkuil-sort-keywords slot-keywords))))))
 
-(defun ithkuil-update-slot (slot category new-value)
-  "SLOT: A slot data type containing the slot type and value
-  CATEGORY: A symbol representing the category to update (version, context, specification, etc.)
-  NEW-VALUE: The new value to insert into the slot.
-
-  Return a new slot with the indicated value replaced."
-  (setq category-slot-type (ithkuil-slot-type-for-category category))
-  (when (not (if (listp category-slot-type)
-                 (member (car slot) category-slot-type)
-               (eq (car slot) category-slot-type)))
-    (error (format "ithkuil-update-slot: Category %s does not exist in slot type %s (requires %s)"
-                   (upcase (symbol-name category)) (car slot) category-slot-type)))
-
-  (let ((new-slot `(,(car slot) . ,(apply 'list (cdr slot))))
-        (index (cdr (assoc category ithkuil-category-ordering))))
-    (setcar (nthcdr index (cdr new-slot)) new-value)
-    new-slot))
-
-(defun ithkuil-delete-slot ()
-  "Delete slot at point."
-  ;; TODO: if a slot is not at point, idk what this will do
-  (ithkuil-beginning-of-slot)
-  (setq slot-start (point))
-  (ithkuil-end-of-slot)
-  (delete-and-extract-region slot-start (point)))
-
-(defun ithkuil-insert-slot (slot)
-  "Insert SLOT at point."
-  ;; TODO: only supports keyword-based slots, not roots or affixes
-  (insert (string-join (cdr slot) "/")))
-
-(defun ithkuil-delete-formative ()
-  "Delete formative at point."
-  (ithkuil-beginning-of-formative)
-  (setq start (point))
-  (ithkuil-end-of-formative)
-  (forward-char)
-  (delete-and-extract-region start (point)))
-
-(defun ithkuil-insert-formative (formative)
-  "Insert FORMATIVE at point."
-  (dolist (slot formative)
-    (ithkuil-insert-slot slot)
-    (insert "-"))
-  (when (not (null formative))
-    (delete-char -1)))
-
-(defun ithkuil-set-keyword-for-slot (slot category candidates)
-  "Set the keyword"
-  ;; TODO: currently only supports setting keyword if the correct slot is at point
-  (setq slot-type (car slot))
-  (setq category-slot-type (ithkuil-slot-type-for-category category))
-  (when (not (eq slot-type category-slot-type))
-    (error (format "ithkuil-set-%s: Slot type at point must be %s, not %s" keyword-symbol category-slot-type (symbol-name slot-type))))
-  (setq new-value
-        (helm :sources
-              (helm-build-sync-source (format "ithkuil-%s" category)
-                :candidates candidates
-                :fuzzy-match t
-                )))
-  (ithkuil-delete-slot)
-  (ithkuil-insert-slot (ithkuil-update-slot slot category new-value)))
-
-(defun ithkuil-set-keyword-generic (category candidates)
-  "Set the keyword"
-  (save-excursion
-    (setq formative (ithkuil-formative-at-point))
-    (setq category-slot-type (ithkuil-slot-type-for-category category))
-    (setq slot (assoc category-slot-type formative))
-    (setq new-value
-          (helm :sources
-                (helm-build-sync-source (format "ithkuil-%s" category)
-                  :candidates candidates
-                  :fuzzy-match t
-                  )))
-    (when (not (null new-value))  ; new-value is nil if user aborts
-      (setq new-slot (ithkuil-update-slot slot category new-value))
-      (message (format "new slot: %s" new-slot))
-      (setcdr (assoc category-slot-type formative) (cdr new-slot))
-      (ithkuil-delete-formative)
-      (ithkuil-insert-formative formative))))
-
 (defun ithkuil-formative-at-point ()
   "Read formative at point. Return an alist of slots."
   (save-excursion
@@ -349,11 +268,111 @@ of the formative.")
         (setq prev-slot-type slot-type)))
     slots-alist))
 
+(defun ithkuil-update-slot (slot category new-value)
+  "SLOT: A slot pair containing the slot type and value.
+  CATEGORY: A symbol representing the category to update (version, context, specification, etc.).
+  NEW-VALUE: The new value to insert into the slot.
+
+  Return a new slot with the indicated value replaced."
+  (setq category-slot-type (ithkuil-slot-type-for-category category))
+  (when (not (eq (car slot) category-slot-type))
+    (error (format "ithkuil-update-slot: Category %s does not exist in slot type %s (requires %s)"
+                   (upcase (symbol-name category)) (car slot) category-slot-type)))
+
+  (let ((new-slot `(,(car slot) . ,(apply 'list (cdr slot))))
+        (index (cdr (assoc category ithkuil-category-ordering))))
+    (setcar (nthcdr index (cdr new-slot)) new-value)
+    new-slot))
+
+
+(defun ithkuil-delete-slot ()
+  "Delete slot at point."
+  ;; TODO: if a slot is not at point, idk what this will do
+  (ithkuil-beginning-of-slot)
+  (setq slot-start (point))
+  (ithkuil-end-of-slot)
+  (delete-and-extract-region slot-start (point)))
+
+(defun ithkuil-insert-slot (slot)
+  "Insert SLOT at point."
+  ;; TODO: only supports keyword-based slots, not roots or affixes
+  (insert (string-join (cdr slot) "/")))
+
+(defun ithkuil-delete-formative ()
+  "Delete formative at point."
+  (save-excursion
+    (ithkuil-beginning-of-formative)
+    (setq start (point))
+    (ithkuil-end-of-formative)
+    (delete-and-extract-region start (point))))
+
+(defun ithkuil-insert-formative (formative)
+  "Insert FORMATIVE at point."
+  (dolist (slot formative)
+    (ithkuil-insert-slot slot)
+    (insert "-"))
+  (when (not (null formative))
+    (delete-char -1)))
+
+(defun ithkuil-helm (category candidates)
+  "Prompt the user to select a value for the given category."
+  (helm :sources
+        (helm-build-sync-source (format "Ithkuil %s" (capitalize (symbol-name category)))
+          :candidates candidates
+          :fuzzy-match t
+          )))
+
+(defun ithkuil-set-keyword-for-slot (slot category candidates)
+  "Set the keyword"
+  ;; TODO: currently only supports setting keyword if the correct slot is at point
+  (setq slot-type (car slot))
+  (setq category-slot-type (ithkuil-slot-type-for-category category))
+  (when (not (eq slot-type category-slot-type))
+    (error (format "ithkuil-set-%s: Slot type at point must be %s, not %s" keyword-symbol category-slot-type (symbol-name slot-type))))
+  (setq new-value (ithkuil-helm category candidates))
+  (ithkuil-delete-slot)
+  (ithkuil-insert-slot (ithkuil-update-slot slot category new-value)))
+
+(defun ithkuil-set-keyword-generic (category candidates)
+  "Set the keyword for the given category, using Helm to prompt the list of candidates."
+  (save-excursion
+    (setq formative (ithkuil-formative-at-point))
+    (setq category-slot-type (ithkuil-slot-type-for-category category))
+    (setq slot (assoc category-slot-type formative))
+    (setq new-value (ithkuil-helm category candidates))  ; get user input
+    (when (not (null new-value))  ; new-value is nil if user aborts
+      (setq new-slot (ithkuil-update-slot slot category new-value))
+      (setcdr (assoc category-slot-type formative) (cdr new-slot))
+      (ithkuil-delete-formative)
+      (ithkuil-insert-formative formative))))
+
+
+(defun ithkuil-get-root-at-point ()
+  (assoc (cadr (assoc (ithkuil-slot-type-for-category 'root) (ithkuil-formative-at-point)))
+         ithkuil-lexicon))
+
 ;;;
 ;;;
-;;; Major mode functions
+;;; Lexicon
 ;;;
 ;;;
+
+;; TODO: not sure this will always work. depends on load path
+
+;; A list of lists where each list represents a single root, and may contain the following items in order
+(load-file "lexicon.el")
+
+;;;
+;;;
+;;; Major mode user-facing functions
+;;;
+;;;
+
+(defun ithkuil-describe-root-at-point ()
+  "Describe the root of the formative at point. Return the entry list for that root."
+  (interactive)
+  (let ((root-entry (ithkuil-get-root-at-point)))
+    (message (format "%s: %s" (car root-entry) (cadr root-entry)))))
 
 (defun ithkuil-encode-slot-Vv (stem version context)
   "Encode slot Vv from long form into Ithkuil."
@@ -394,15 +413,30 @@ of the formative.")
   (interactive)
   )
 
+(defun ithkuil-set-root ()
+  "Set root for the formative at point."
+  (interactive)
+  (ithkuil-set-keyword-generic
+   'root
+   (loop for row in ithkuil-lexicon
+         if (> (length row) 1)  ; skip any roots that don't have definitions
+         collect (cons
+                  (format "%s: %s" (car row ) (cadr row))  ; display name
+                  (car row)                                ; real name
+                  ))))
+
 (defun ithkuil-set-stem ()
   "Set stem for the formative at point."
   (interactive)
-  (ithkuil-set-keyword-generic
-   'stem
-   '(("Stem 1 (S1)" . "S1")
-     ("Stem 2 (S2)" . "S2")
-     ("Stem 3 (S3)" . "S3")
-     ("Stem 4 (S4)" . "S4"))))
+  (let ((root-entry (ithkuil-get-root-at-point)))
+    (when (< (length root-entry) 5)
+      (error (format "ithkuil-set-stem: Root '%s' does not have enough stems specified" (car root-entry))))
+    (ithkuil-set-keyword-generic
+     'stem
+     `((,(format "Stem 0 (S0): %s" (nth 1 root-entry)) . "S0")
+       (,(format "Stem 1 (S1): %s" (nth 2 root-entry)) . "S1")
+       (,(format "Stem 2 (S2): %s" (nth 3 root-entry)) . "S2")
+       (,(format "Stem 3 (S3): %s" (nth 4 root-entry)) . "S3")))))
 
 (defun ithkuil-set-version ()
   "Set version for the formative at point."
@@ -447,7 +481,7 @@ of the formative.")
   (ithkuil-set-keyword-generic
    'membership
    '(("Uniplex (UNI)" . "UNI")
-     ("Multiplex - Similar (MPX)" . "MPX")
+     ("Multiplex - Similar (MPS)" . "MPS")
      ("Multiplex - Dissimilar (MPD)" . "MPD")
      ("Multiplex - Fuzzy (MPF)" . "MPF"))))
 
@@ -504,30 +538,29 @@ of the formative.")
 (defun ithkuil-set-category-at-point ()
   "Set the value of the category at point, prompting with a list of options."
   (interactive)
-  (setq word (thing-at-point 'word t))
-  (setq category (ithkuil-category word))
-  (when (null category)
-    (error (format "Unknown category for \"%s\"" word)))
-  (funcall (alist-get category
-                      '((stem . ithkuil-set-stem)
-                        (version . ithkuil-set-version)
-                        (context . ithkuil-set-context)
-                        (function . ithkuil-set-function)
-                        (specification . ithkuil-set-specification)
-                        (membership . ithkuil-set-membership)
-                        (structure . ithkuil-set-structure)
-                        (extension . ithkuil-set-extension)
-                        (affiliation . ithkuil-set-affiliation)
-                        (perspective . ithkuil-set-perspective)
-                        (essence . ithkuil-set-essence)))))
-
-
+  (save-excursion
+    (setq word (thing-at-point 'word t))
+    (setq category (ithkuil-category word))
+    (when (null category)
+      (error (format "Unknown category for \"%s\"" word)))
+    (funcall (alist-get category
+                        '((stem . ithkuil-set-stem)
+                          (version . ithkuil-set-version)
+                          (context . ithkuil-set-context)
+                          (function . ithkuil-set-function)
+                          (specification . ithkuil-set-specification)
+                          (membership . ithkuil-set-membership)
+                          (structure . ithkuil-set-structure)
+                          (extension . ithkuil-set-extension)
+                          (affiliation . ithkuil-set-affiliation)
+                          (perspective . ithkuil-set-perspective)
+                          (essence . ithkuil-set-essence))))))
 
 (defun ithkuil-insert-template ()
   (interactive)
   "Insert a template formative at point. This template can then
   be modified using the various setter functions."
-  (insert "S1/PRC/EXS-exampleroot-DYN/BSC-UPX/SEP/DEL/CSL/M/NRM")
+  (insert "S1/PRC/EXS-exampleroot-STA/BSC-UPX/SEP/DEL/CSL/M/NRM")
   )
 
 ;;;
@@ -562,9 +595,11 @@ of the formative.")
 
 (add-to-list 'auto-mode-alist '("\\.ith\\'" . ithkuil-mode))
 
-(define-key ithkuil-mode-map (kbd "C-c C-i") 'ithkuil-insert-template)
-(define-key ithkuil-mode-map (kbd "C-c C-t") 'ithkuil-set-category-at-point)
+(define-key ithkuil-mode-map (kbd "C-c C-e") 'ithkuil-set-category-at-point)
+(define-key ithkuil-mode-map (kbd "C-c C-r") 'ithkuil-describe-root-at-point)
+(define-key ithkuil-mode-map (kbd "C-c C-t") 'ithkuil-insert-template)
 
+(define-key ithkuil-mode-map (kbd "C-c C-s r") 'ithkuil-set-root)
 (define-key ithkuil-mode-map (kbd "C-c C-s s") 'ithkuil-set-stem)
 (define-key ithkuil-mode-map (kbd "C-c C-s v") 'ithkuil-set-version)
 (define-key ithkuil-mode-map (kbd "C-c C-s c") 'ithkuil-set-context)
