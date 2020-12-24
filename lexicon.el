@@ -1,4 +1,4 @@
-(defvar ithkuil-lexicon
+(defconst ithkuil-lexicon
   '(("b" "belief/doctrine/dogma" "believing" "faith/belief in doctrine" "dogma/unquestionable belief")
     ("c" "hearing/sound" "hearing a sound" "inner ear" "one’s aural faculty")
     ("č" "be/equivalence" "ontological identity" "functional equivalence" "epistemological synonymousness")
@@ -1778,4 +1778,6 @@
   - Schema
   - (rest) Parameters
   All items after the first are optional.
+
+  Last updated 2020-12-23.
   ")

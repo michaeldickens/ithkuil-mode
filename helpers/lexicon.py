@@ -15,7 +15,7 @@ def lexicon_to_emacs_lisp():
     https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/
     '''
     with open("db/lexicon.tsv") as lexicon_file:
-        print("(defvar ithkuil-lexicon")
+        print("(defconst ithkuil-lexicon")
         print("  '(", end="")
         is_header = True
         is_first = True
@@ -40,6 +40,8 @@ def lexicon_to_emacs_lisp():
         print("  - Schema")
         print("  - (rest) Parameters")
         print("  All items after the first are optional.")
+        print("")
+        print("  Last updated 2020-12-23.")
         print("  \")")
 
 
@@ -52,4 +54,4 @@ def lexicon_all_chars():
         print("".join(sorted(list(set(chars)))))
 
 
-lexicon_all_chars()
+lexicon_to_emacs_lisp()

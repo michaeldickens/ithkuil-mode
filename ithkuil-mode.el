@@ -39,29 +39,29 @@
 ;;;
 ;;;
 
-(defvar ithkuil-stem-keywords '("S1" "S2" "S3" "S0"))
-(defvar ithkuil-version-keywords '("PRC" "CPT"))
-(defvar ithkuil-context-keywords '("EXS" "FNC" "RPS" "AMG"))
-(defvar ithkuil-function-keywords '("STA" "DYN"))
-(defvar ithkuil-specification-keywords '("BSC" "CTE" "CSV" "OBJ"))
+(setq ithkuil-stem-keywords '("S1" "S2" "S3" "S0"))
+(setq ithkuil-version-keywords '("PRC" "CPT"))
+(setq ithkuil-context-keywords '("EXS" "FNC" "RPS" "AMG"))
+(setq ithkuil-function-keywords '("STA" "DYN"))
+(setq ithkuil-specification-keywords '("BSC" "CTE" "CSV" "OBJ"))
 
 ;; This doc is outdated but it's the newest full explanation of the Ca slot
 ;; https://ithkuil.place/4/archive/2019-12-10-Ca-expansion.pdf
-(defvar ithkuil-membership-keywords '("UPX" "MPS" "MPD" "MPF"))
-(defvar ithkuil-structure-keywords '("SEP" "CND" "FSD"))
-(defvar ithkuil-extension-keywords '("DEL" "PRX" "ICP" "ATV" "GRA" "DEPL"))
-(defvar ithkuil-affiliation-keywords '("CSL" "ASO" "COA" "VAR"))
-(defvar ithkuil-perspective-keywords '("M" "P" "N" "A"))
-(defvar ithkuil-essence-keywords '("NRM" "RPV"))
+(setq ithkuil-membership-keywords '("UPX" "MPS" "MPD" "MPF"))
+(setq ithkuil-structure-keywords '("SEP" "CND" "FSD"))
+(setq ithkuil-extension-keywords '("DEL" "PRX" "ICP" "ATV" "GRA" "DEPL"))
+(setq ithkuil-affiliation-keywords '("CSL" "ASO" "COA" "VAR"))
+(setq ithkuil-perspective-keywords '("M" "P" "N" "A"))
+(setq ithkuil-essence-keywords '("NRM" "RPV"))
 
-(defvar ithkuil-alphabet-clean "aäbcčdḍeëfgiïjklmnňoöprřsštţuüvxzẓž")
+(setq ithkuil-alphabet-clean "aäbcčdḍeëfgiïjklmnňoöprřsštţuüvxzẓž")
 
 ;; This list contains an extra character (ḑ, U+1E11) which I believe is a human
 ;; transcription error b/c it looks almost identical to ḍ (U+1E0D)
-(defvar ithkuil-alphabet       "abcdefghijklmnoprstuvwxyzçčļňřšţžḍḑẓ")
+(setq ithkuil-alphabet       "abcdefghijklmnoprstuvwxyzçčļňřšţžḍḑẓ")
 
-(defvar ithkuil-slot-regexp (format "[%sA-Z0-3/]+" ithkuil-alphabet))
-(defvar ithkuil-formative-regexp (format "[%sA-Z0-3/]+\\(-[%sA-Z0-3/]+\\)*"
+(setq ithkuil-slot-regexp (format "[%sA-Z0-3/]+" ithkuil-alphabet))
+(setq ithkuil-formative-regexp (format "[%sA-Z0-3/]+\\(-[%sA-Z0-3/]+\\)*"
                                          ithkuil-alphabet ithkuil-alphabet))
 
 ;;;
@@ -70,7 +70,7 @@
 ;;;
 ;;;
 
-(defvar ithkuil-slot-Vv-table
+(setq ithkuil-slot-Vv-table
   ;; look up stem / version / context.
   ;; NEG/4 shortcut not yet supported
   '(("S1"
@@ -110,14 +110,13 @@
              ("RPS" . "uö")
              ("AMG" . "öe")))))
 
-
-(defvar ithkuil-category-ordering
+(setq ithkuil-category-ordering
   '((stem . 0) (version . 1) (context . 2)
     (root . 0)
     (function . 0) (specification . 1)
     (membership . 0) (structure . 1) (extension . 2) (affiliation . 3) (perspective . 4) (essence . 5)))
 
-(defvar ithkuil-legal-slot-transitions
+(setq ithkuil-legal-slot-transitions
   ;; TODO: add support for incorporated roots and reversed affixes
   '((beginning . (Vv))
     (Vv . (Cr))

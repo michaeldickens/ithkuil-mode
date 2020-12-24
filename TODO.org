@@ -11,3 +11,5 @@
 * Refactor
 * Bugs
 ** TODO Syntax highlighting doesn't work
+** TODO All the top-level `setq`s should really be `defconst`s
+but it's hard to test changes in that case
