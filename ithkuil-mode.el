@@ -54,9 +54,14 @@
 (defvar ithkuil-perspective-keywords '("M" "P" "N" "A"))
 (defvar ithkuil-essence-keywords '("NRM" "RPV"))
 
-(defvar ithkuil-alphabet "aäbcčdḍeëfgiïjklmnňoöprřsštţuüvxzẓž")
-(defvar ithkuil-slot-regexp (format "[%s0-3/]+" ithkuil-alphabet))
-(defvar ithkuil-formative-regexp (format "[%s0-3/]+\\(-[%s0-3/]+\\)*"
+(defvar ithkuil-alphabet-clean "aäbcčdḍeëfgiïjklmnňoöprřsštţuüvxzẓž")
+
+;; This list contains an extra character (ḑ, U+1E11) which I believe is a human
+;; transcription error b/c it looks almost identical to ḍ (U+1E0D)
+(defvar ithkuil-alphabet       "abcdefghijklmnoprstuvwxyzçčļňřšţžḍḑẓ")
+
+(defvar ithkuil-slot-regexp (format "[%sA-Z0-3/]+" ithkuil-alphabet))
+(defvar ithkuil-formative-regexp (format "[%sA-Z0-3/]+\\(-[%sA-Z0-3/]+\\)*"
                                          ithkuil-alphabet ithkuil-alphabet))
 
 ;;;

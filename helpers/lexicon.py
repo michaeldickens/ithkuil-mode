@@ -43,4 +43,13 @@ def lexicon_to_emacs_lisp():
         print("  \")")
 
 
-lexicon_to_emacs_lisp()
+def lexicon_all_chars():
+    with open("db/lexicon.tsv") as lexicon_file:
+        chars = []
+        for line in lexicon_file:
+            root = line.strip().split("\t")[0]
+            chars.extend(list(root))
+        print("".join(sorted(list(set(chars)))))
+
+
+lexicon_all_chars()
