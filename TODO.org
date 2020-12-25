@@ -2,14 +2,17 @@
 ** TODO Word boundaries
 - ithkuil-mode should treat word boundaries as either slots or formatives. Not sure how to change this, see documenation for 'forward-word
 ** TODO Encode and decode functions (to convert long form spec into Ithkuil and back)
-** TODO Root insertion
-** TODO For stem insertion, show the actual descriptions for the root
 ** TODO Affixes
 - Roots and affixes can both contain any characters. Right now, characters that don't match a known category are treated as roots, but they might also be affixes. Probably need to pay attention to slot order to distinguish roots and affixes. Try to do this while remaining robust against incorrectly ordered slots.
   - One way to do this: If a formative contains one unknown category, assume it's a root, and allow categories to be in any order. If it contains multiple unknown categories, enforce proper ordering, and raise an error if something looks wrong. Use 'ithkuil-legal-slot-transitions to disambiguate roots and affixes.
 - Will need to add affix support to all the lookup tables
+** TODO Support for multiple affixes
+- One method would be to prompt to input a number and then update the nth affix, or add a new affix at 0. Also functions insert-affix-after nth, and delete-affix nth
+** TODO Support for other categories that can appear in more than one place
+** TODO Degree and type (not just degree)
+** TODO Set root and stem simultaneously
 * Refactor
-* Bugs
-** TODO Syntax highlighting doesn't work
 ** TODO All the top-level `setq`s should really be `defconst`s
 but it's hard to test changes in that case
+* Bugs
+** TODO Syntax highlighting doesn't work

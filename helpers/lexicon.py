@@ -6,16 +6,17 @@ lexicon.py
 Author: Michael Dickens <mdickens93@gmail.com>
 Created: 2020-12-23
 
+Lexicon taken from:
+https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/
+
 """
 
 
-def lexicon_to_emacs_lisp():
+def roots_to_emacs_lisp():
     '''
-    Lexicon taken from:
-    https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/
     '''
-    with open("db/lexicon.tsv") as lexicon_file:
-        print("(defconst ithkuil-lexicon")
+    with open("db/roots.tsv") as lexicon_file:
+        print("(defconst ithkuil-roots")
         print("  '(", end="")
         is_header = True
         is_first = True
@@ -23,7 +24,7 @@ def lexicon_to_emacs_lisp():
             if is_header:
                 is_header = False
                 continue
-            entries = line.strip().split("\t")
+            entries = line.strip().replace('"', '\\"').split("\t")
             if is_first:
                 prefix = ""
                 is_first = False
@@ -45,8 +46,8 @@ def lexicon_to_emacs_lisp():
         print("  \")")
 
 
-def lexicon_all_chars():
-    with open("db/lexicon.tsv") as lexicon_file:
+def roots_all_chars():
+    with open("db/roots.tsv") as lexicon_file:
         chars = []
         for line in lexicon_file:
             root = line.strip().split("\t")[0]
@@ -54,4 +55,7 @@ def lexicon_all_chars():
         print("".join(sorted(list(set(chars)))))
 
 
-lexicon_to_emacs_lisp()
+def affixes_to_emacs_lisp():
+
+
+affixes_to_emacs_lisp()
