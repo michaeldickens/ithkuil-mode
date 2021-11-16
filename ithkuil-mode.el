@@ -39,12 +39,13 @@
     (goto-char 1)
     (forward-line)  ; skip header line
     (loop
-     for line = (buffer-substring (point)
-                                  (save-excursion (end-of-line)
-                                                  (point)))
+     for line = (buffer-substring
+                 (point)
+                 (save-excursion (end-of-line) (point)))
      if (not (string= line ""))
      collect (split-string line "\t")
-     while (= (forward-line) 0)  ; (forward-line) returns >0 if it can't move forward anymore
+     ;; (forward-line) returns >0 if it can't move forward anymore
+     while (= (forward-line) 0)
      )))
 
 ;;;
@@ -109,6 +110,11 @@ Accessed 2020-12-24.")
 (setq ithkuil-perspective-keywords '("M" "P" "N" "A"))
 (setq ithkuil-essence-keywords '("NRM" "RPV"))
 
+(setq ithkuil-case-keywords '("RLT" "PUR"))  ; TODO: complete this list
+(setq ithkuil-illocution-keywords '("ASR" "PFM"))
+(setq ithkuil-expectation-keywords '("COG" "RSP" "EXE"))
+(setq ithkuil-validation-keywords '("OBS" "REC" "RPR" "PUP" "PFM2" "IMA" "CVN" "ITU" "INF"))
+
 (setq ithkuil-alphabet-clean "aäbcčdḍeëfgiïjklmnňoöprřsštţuüvxzẓž")
 
 ;; This list contains an extra character (ḑ, U+1E11) which I believe is a human
@@ -170,7 +176,10 @@ Accessed 2020-12-24.")
     (root . 0)
     (function . 0) (specification . 1)
     (membership . 0) (structure . 1) (extension . 2) (affiliation . 3) (perspective . 4) (essence . 5)
-    (affix . 0) (degree . 1) (type . 2)))
+    (affix . 0) (degree . 1) (type . 2)
+    (case . 0)
+    (illocution . 0) (expectation . 1) (validation . 2)
+    ))
 
 (defvar ithkuil-legal-slot-transitions nil
   "A state machine for formatives,
@@ -186,11 +195,11 @@ of the formative.")
         (Vv . (Cr))
         (Cr . (Vr))
         (Vr . (Ca))
-        (Ca . (end VxCs Vn Vc))
-        (VxCs . (VxCs end Vn Vc))
+        (Ca . (end VxCs Vn Vc Vk))
+        (VxCs . (VxCs end Vn Vc Vk))
         (Vn . (Cn))
-        (Cn . (end Vc))
-        (Vc . (Vk))
+        (Cn . (end Vc Vk))
+        (Vc . (end))
         (Vk . (end))))
 
 ;;;
@@ -212,6 +221,10 @@ of the formative.")
    ((member word ithkuil-affiliation-keywords) 'affiliation)
    ((member word ithkuil-perspective-keywords) 'perspective)
    ((member word ithkuil-essence-keywords) 'essence)
+   ((member word ithkuil-case-keywords) 'case)
+   ((member word ithkuil-illocution-keywords) 'illocution)
+   ((member word ithkuil-expectation-keywords) 'expectation)
+   ((member word ithkuil-validation-keywords) 'validation)
    ((and (stringp word) (string-match-p "[0-9]" word)) 'degree)
    ((member word ithkuil-affix-keywords) 'affix)  ; TODO: O(n) on >400 affixes
    (t nil)))
@@ -238,6 +251,10 @@ of the formative.")
    ((eq category 'essence) 'Ca)
    ((eq category 'degree) 'VxCs)
    ((eq category 'affix) 'VxCs)
+   ((eq category 'case) 'Vc)
+   ((eq category 'illocution) 'Vk)
+   ((eq category 'expectation) 'Vk)
+   ((eq category 'validation) 'Vk)
    (t nil)))
 
 (defun ithkuil-beginning-of-slot ()
@@ -368,9 +385,23 @@ Return a new slot with the indicated value replaced."
 
 (defun ithkuil-helm (category candidates)
   "Prompt the user to select a value for the given category."
+  (setq candidate-keywords (mapcar 'cdr candidates))
+
+  ;; Change descriptions from "Name: Description"
+  ;; to "Name (KEYWORD): Description"
+  (setq candidate-descriptions
+        (mapcar
+         (lambda (pair)
+           (let ((keyword (cdr pair))
+                 (split-description (split-string (car pair) ":")))
+             (if (> (length split-description) 1)
+                 (apply 'concat (car split-description) " (" keyword "): " (cdr split-description))
+               (concat (car split-description) " (" keyword ")"))
+           )) candidates))
+
   (helm :sources
         (helm-build-sync-source (format "Ithkuil %s" (capitalize (symbol-name category)))
-          :candidates candidates
+          :candidates (-zip-pair candidate-descriptions candidate-keywords)
           :fuzzy-match t
           )))
 
@@ -522,36 +553,36 @@ Return a new slot with the indicated value replaced."
   (interactive)
   (ithkuil-set-keyword-generic
    'version
-   '(("Processural (PRC): non-goal-oriented" . "PRC")
-     ("Completive (CPT): goal-oriented" . "CPT"))))
+   '(("Processural: non-goal-oriented" . "PRC")
+     ("Completive: goal-oriented" . "CPT"))))
 
 (defun ithkuil-set-context ()
   "Set context for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'context
-   '(("Existential (EXS): ontologically objective" . "EXS")
-     ("Functional (FNC): defined socially by ideas, attitudes, beliefs, opinions, culture, use" . "FNC")
-     ("Representational (RPS): as symbol, metaphor, or metonym" . "RPS")
-     ("Amalgamative (AMG): systemic, gestalt-like nature, derived from interrelationship of all parts" . "AMG"))))
+   '(("Existential: ontologically objective" . "EXS")
+     ("Functional: defined socially by ideas, attitudes, beliefs, opinions, culture, use" . "FNC")
+     ("Representational: as symbol, metaphor, or metonym" . "RPS")
+     ("Amalgamative: systemic, gestalt-like nature, derived from interrelationship of all parts" . "AMG"))))
 
 (defun ithkuil-set-function ()
   "Set function for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'function
-   '(("Stative (STA): Static, unchanging entity" . "STA")
-     ("Dynamic (DYN): Action/change or state involving change" . "DYN"))))
+   '(("Stative: Static, unchanging entity" . "STA")
+     ("Dynamic: Action/change or state involving change" . "DYN"))))
 
 (defun ithkuil-set-specification ()
   "Set specification for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'specification
-   '(("Basic (BSC): Holistic instantiation of a root; an instance/occurrence" . "BSC")
-      ("Contential (CTE): Content or essence or idealized/platonic form" . "CTE")
-      ("Constitutive (CSV): The form in which an entity/state/act actually expresses itself" . "CSV")
-      ("Objective (OBJ): Means by which root occurs, or object/entity associated with an interaction, or tangible outcome, or experiencer of a state/act" . "OBJ"))
+   '(("Basic: Holistic instantiation of a root; an instance/occurrence" . "BSC")
+      ("Contential: Content or essence or idealized/platonic form" . "CTE")
+      ("Constitutive: The form in which an entity/state/act actually expresses itself" . "CSV")
+      ("Objective: Means by which root occurs, or object/entity associated with an interaction, or tangible outcome, or experiencer of a state/act" . "OBJ"))
      ))
 
 (defun ithkuil-set-membership ()
@@ -559,51 +590,51 @@ Return a new slot with the indicated value replaced."
   (interactive)
   (ithkuil-set-keyword-generic
    'membership
-   '(("Uniplex (UNI)" . "UNI")
-     ("Multiplex - Similar (MPS)" . "MPS")
-     ("Multiplex - Dissimilar (MPD)" . "MPD")
-     ("Multiplex - Fuzzy (MPF)" . "MPF"))))
+   '(("Uniplex" . "UNI")
+     ("Multiplex - Similar" . "MPS")
+     ("Multiplex - Dissimilar" . "MPD")
+     ("Multiplex - Fuzzy" . "MPF"))))
 
 (defun ithkuil-set-structure ()
   "Set structure for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'structure
-   '(("Separate (SEP)" . "SEP")
-     ("Connected (CND)" . "CND")
-     ("Fused (FSD)" . "FSD"))))
+   '(("Separate" . "SEP")
+     ("Connected" . "CND")
+     ("Fused" . "FSD"))))
 
 (defun ithkuil-set-extension ()
   "Set extension for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'extension
-   '(("Delimitive (DEL)" . "DEL")
-     ("Proximal (PRX)" . "PRX")
-     ("Incipient (ICP)" . "ICP")
-     ("Attenuative (ATV)" . "ATV")
-     ("Graduative (GRA)" . "GRA")
-     ("Depletive (DPL)" . "DPL"))))
+   '(("Delimitive" . "DEL")
+     ("Proximal" . "PRX")
+     ("Incipient" . "ICP")
+     ("Attenuative" . "ATV")
+     ("Graduative" . "GRA")
+     ("Depletive" . "DPL"))))
 
 (defun ithkuil-set-affiliation ()
   "Set affiliation for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'affiliation
-   '(("Consolidative (CSL): Function/state is inapplicable or irrelevant" . "CSL")
-     ("Associative (ASO): Members of set share a function/state" . "ASO")
-     ("Coalescent (COA): Members of set have different but complementary functions/states" . "COA")
-     ("Variative (VAR): Members of set have varying functions/states or are at odds" . "VAR"))))
+   '(("Consolidative: Function/state is inapplicable or irrelevant" . "CSL")
+     ("Associative: Members of set share a function/state" . "ASO")
+     ("Coalescent: Members of set have different but complementary functions/states" . "COA")
+     ("Variative: Members of set have varying functions/states or are at odds" . "VAR"))))
 
 (defun ithkuil-set-perspective ()
   "Set perspective for the formative at point."
   (interactive)
   (ithkuil-set-keyword-generic
    'perspective
-   '(("Monadic (M): Bounded embodiment or single contextual entity" . "M")
-     ("Polyadic (P)" . "P")
-     ("Nomic (N): An archetype, containing all conceivable members of a set" . "N")
-     ("Abstract (A): The concept of a thing, or temporal abstraction; like English -hood/-ness" . "A")
+   '(("Monadic: Bounded embodiment or single contextual entity" . "M")
+     ("Polyadic: Plural" . "P")
+     ("Nomic: An archetype, containing all conceivable members of a set" . "N")
+     ("Abstract: The concept of a thing, or temporal abstraction; like English -hood/-ness" . "A")
      )))
 
 (defun ithkuil-set-essence ()
@@ -611,8 +642,48 @@ Return a new slot with the indicated value replaced."
   (interactive)
   (ithkuil-set-keyword-generic
    'essence
-   '(("Normal (NRM)" . "NRM")
-     ("Representative (RPV)" . "RPV"))))
+   '(("Normal" . "NRM")
+     ("Representative" . "RPV"))))
+
+(defun ithkuil-set-case ()
+  "Set case for the formative at point."
+  (interactive)
+  (ithkuil-set-keyword-generic
+   'case
+   '(("Relative: Constituting a relative clause under the preceding formative" . "RLT")
+     ("Purposive: For the purpose of another entity/act" . "PUR"))))
+
+(defun ithkuil-set-illocution ()
+  "Set illocution for the formative at point."
+  (interactive)
+  (ithkuil-set-keyword-generic
+   'illocution
+   '(("Assertive: Assertion/proposition/truth claim" . "ASR")
+     ("Performative: Non-truth claim, e.g., declaration, command, question" . "PFM"))))
+
+(defun ithkuil-set-expectation ()
+  "Set expectation for the formative at point."
+  (interactive)
+  (ithkuil-set-keyword-generic
+   'expectation
+   '(("Cognitive: Addressee expected to listen and consider" . "COG")
+     ("Responsive: Addressee expected to verbally respond" . "RSP")
+     ("Executive: Addressee expected to physically act in response" . "EXE"))))
+
+(defun ithkuil-set-validation ()
+  "Set validation for the formative at point."
+  (interactive)
+  (ithkuil-set-keyword-generic
+   'validation
+   '(("Observational: Present sensory knowledge or experience" . "OBS")
+     ("Recollective: Past remembered sensory knowledge or experienced. \"I remember...\"" . "REC")
+     ("Reportive: Knowledge from a 3rd party. \"I heard...\"" . "RPR")
+     ("Purportive: Knowledge from a definitive/veribfiable 3rd party source: \"I've read...\"" . "PUP")
+     ("Performative: Placeholder for performative illocution" . "PFM2")
+     ("Imaginary: Unreal statement, based on imagination, dream, etc." . "IMA")
+     ("Conventional: Cultural/conventional knowledge" . "CVN")
+     ("Intuitive: Intuition, hunch, subjective feeling, etc." . "ITU")
+     ("Inferential: Inference from evidence, induction, etc." . "INF"))))
 
 (defun ithkuil-set-category-at-point ()
   "Set the value of the category at point, prompting with a list of options."
@@ -636,6 +707,10 @@ Return a new slot with the indicated value replaced."
                           (essence . ithkuil-set-essence)
                           (root . ithkuil-set-root)
                           (affix . ithkuil-set-affix)
+                          (case . ithkuil-set-case)
+                          (illocution . ithkuil-set-illocution)
+                          (expectation . ithkuil-set-expectation)
+                          (validation . ithkuil-set-validation)
                           (degree-or-type . TODO-no-way-to-set-degree-and-type)
                           )))))
 
@@ -669,7 +744,6 @@ be modified using the various setter functions."
            . font-lock-keyword-face)))
 
 
-
 (define-derived-mode ithkuil-mode fundamental-mode "ithkuil"
   "major mode for writing text in the Ithkuil language."
   ;; TODO: maybe use text-mode or something as the base mode?
@@ -687,7 +761,7 @@ be modified using the various setter functions."
 (define-key ithkuil-mode-map (kbd "C-c C-s a") 'ithkuil-set-affix)
 (define-key ithkuil-mode-map (kbd "C-c C-s d") 'ithkuil-set-degree)
 (define-key ithkuil-mode-map (kbd "C-c C-s v") 'ithkuil-set-version)
-(define-key ithkuil-mode-map (kbd "C-c C-s c") 'ithkuil-set-context)
+(define-key ithkuil-mode-map (kbd "C-c C-s x") 'ithkuil-set-context)
 (define-key ithkuil-mode-map (kbd "C-c C-s f") 'ithkuil-set-function)
 (define-key ithkuil-mode-map (kbd "C-c C-s p") 'ithkuil-set-specification)
 (define-key ithkuil-mode-map (kbd "C-c C-s m") 'ithkuil-set-membership)
@@ -696,6 +770,10 @@ be modified using the various setter functions."
 (define-key ithkuil-mode-map (kbd "C-c C-s l") 'ithkuil-set-affiliation)
 (define-key ithkuil-mode-map (kbd "C-c C-s p") 'ithkuil-set-perspective)
 (define-key ithkuil-mode-map (kbd "C-c C-s n") 'ithkuil-set-essence)
+(define-key ithkuil-mode-map (kbd "C-c C-s c") 'ithkuil-set-case)
+(define-key ithkuil-mode-map (kbd "C-c C-s i") 'ithkuil-set-illocution)
+(define-key ithkuil-mode-map (kbd "C-c C-s E") 'ithkuil-set-expectation)
+(define-key ithkuil-mode-map (kbd "C-c C-s V") 'ithkuil-set-validation)
 
 (provide 'ithkuil-mode)
 

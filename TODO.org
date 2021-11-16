@@ -1,6 +1,11 @@
 * Features
 ** TODO Word boundaries
 - ithkuil-mode should treat word boundaries as either slots or formatives. Not sure how to change this, see documenation for 'forward-word
+** EDIT Slot XII: Case or Illocution+Expectation+Validation
+- [ ] Program has no way to insert Illocution or Expectation or Validation if they're not already present, which is problematic because they're optimal but the user might want to add them after the fact
+- [ ] Support swapping between Case and Illocution+Expectation+Validation
+** TODO Slot XI: [Valence or Aspect or Phase or Level or Effect] + Mood/Case-Scope
+** TODO Slot XIII: Bias or Case-Scope or Mood
 ** TODO Encode and decode functions (to convert long form spec into Ithkuil and back)
 ** TODO Affixes
 - Roots and affixes can both contain any characters. Right now, characters that don't match a known category are treated as roots, but they might also be affixes. Probably need to pay attention to slot order to distinguish roots and affixes. Try to do this while remaining robust against incorrectly ordered slots.

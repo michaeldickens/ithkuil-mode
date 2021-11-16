@@ -3,6 +3,8 @@ Major mode for the Ithkuil constructed language.
 
 This repo is still in its early stages, so it doesn't have many features and it's probably buggy.
 
+README is out of date. This page does not describe all features of ithkuil-mode, and describes some features incorrectly.
+
 ## Requirements
 
 `ithkuil-mode` requires [Helm](https://emacs-helm.github.io/helm/).
@@ -17,11 +19,11 @@ You can write out an Ithkuil formative using the formative notation, for example
 
 > S1/PRC/EXS-ExampleRoot-DYN/BSC-UPX/SEP/DEL/CSL/M/NRM
 
-or you can use the command `ithkuil-insert-template` (`C-c C-i`) to insert a sample formative which you can then edit.
+or you can use the command `ithkuil-insert-template` (`C-c C-t`) to insert a sample formative which you can then edit.
 
 `ithkuil-mode` provides a series of functions for changing the values of various categories.
 
-`C-c C-t` (`ithkuil-set-category-at-point`) prompt you to set the value of the category under the cursor, and uses Helm to provide a searchable list of valid values.
+`C-c C-e` (`ithkuil-set-category-at-point`) prompts you to set the value of the category under the cursor, and uses Helm to provide a searchable list of valid values.
 
 A set of additional functions allow you to set the value of any category while your cursor is anywhere in the formative:
 
@@ -41,7 +43,7 @@ A set of additional functions allow you to set the value of any category while y
 
 As a proof of concept, `ithkuil-mode` has a function to convert the `Vv` slot into actual Ithkuil, but only for the `Vv` slot.
 
-## Features that would be nice, but aren't yet supported
+## To-do list
 
 - [ ] Support Unicode, so users are not limited to ASCII-only roots.
 - [ ] Function to encode formatives into Ithkuil (not just for `Vv` slot), and a decoding function.
